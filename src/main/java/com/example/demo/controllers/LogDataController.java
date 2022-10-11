@@ -8,6 +8,8 @@ import java.util.List;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
 //import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 //import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 //import org.elasticsearch.action.index.IndexResponse;
@@ -16,6 +18,8 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.core.AcknowledgedResponse;
 import org.elasticsearch.client.indices.PutMappingRequest;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.xcontent.XContentType;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +48,9 @@ public class LogDataController
     
     @Autowired
     private RestHighLevelClient elasticSearchClient;
+	
+	RestHighLevelClient client = new RestHighLevelClient(
+			RestClient.builder(new HttpHost("localhost", 9200, "http"), new HttpHost("localhost", 9201, "http")));
 
 
     // tetsing -----------------------------------------------------
@@ -52,8 +59,6 @@ public class LogDataController
 	public String trail1() throws IOException
 
 	{
-		RestHighLevelClient client = new RestHighLevelClient(
-				RestClient.builder(new HttpHost("localhost", 9200, "http"), new HttpHost("localhost", 9201, "http")));
 
 		//String filePath = "C:\\Users\\Hp\\Desktop\\phonenumber.txt";
 		String filePath = "D:\\WORK\\NEOSOFT\\Java-Team\\Projects\\elastic-search\\store\\demodata.txt";
@@ -96,6 +101,26 @@ public class LogDataController
 
 	}
     
+    @GetMapping("/test-doc-ingestion")
+    public String searchWithTerm() {
+    	SearchRequest searchRequest = new SearchRequest(); 
+    	SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder(); 
+    	searchSourceBuilder.query(QueryBuilders.matchAllQuery()); 
+    	searchRequest.source(searchSourceBuilder);
+    	
+    	SearchResponse searchResponse = null;
+    	try {
+			searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+			
+			System.out.println("Hits >>> "+searchResponse.getHits());
+			System.out.println("searchResponse >>> "+searchResponse.toString());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+    	return searchResponse.toString();
+    }
     
     @GetMapping("/host")
     public List<LogData> searchLogDataByHost(@RequestParam("host") String host)

@@ -45,7 +45,7 @@ public class LogDataController
 
 	private static final String ROCKS = "rocks";
 
-	private static final String TWITTER = "twitter1";
+	private static final String TWITTER = "twitter5";
 
 	@Autowired
     private LogDataService logDataService;
@@ -128,13 +128,13 @@ public class LogDataController
     }
 
     @GetMapping("/search-with-term")
-    public String searchWithTerm() {
+    public String searchWithTerm(@RequestParam String term) {
     	SearchRequest searchRequest = new SearchRequest("logdataindex"); 
     	SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder(); 
     	
 //    	searchSourceBuilder.query(QueryBuilders.fuzzyQuery("message", "rocks"));
 //    	searchSourceBuilder.query(QueryBuilders.commonTermsQuery("host", "neosoft"));
-    	searchSourceBuilder.query(QueryBuilders.matchBoolPrefixQuery(MESSAGE_FIELD, "neo"));
+    	searchSourceBuilder.query(QueryBuilders.matchBoolPrefixQuery(MESSAGE_FIELD, term));
     	
     	searchRequest.source(searchSourceBuilder);
     	

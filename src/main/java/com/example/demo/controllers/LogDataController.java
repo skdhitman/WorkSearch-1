@@ -41,7 +41,11 @@ import co.elastic.clients.elasticsearch.core.IndexResponse;
 @RequestMapping("/logdata")
 public class LogDataController
 {
-    private static final String TWITTER = "twitter1";
+    private static final String MESSAGE_FIELD = "message";
+
+	private static final String ROCKS = "rocks";
+
+	private static final String TWITTER = "twitter1";
 
 	@Autowired
     private LogDataService logDataService;
@@ -102,10 +106,36 @@ public class LogDataController
 	}
     
     @GetMapping("/test-doc-ingestion")
-    public String searchWithTerm() {
+    public String testDocIngestion() {
     	SearchRequest searchRequest = new SearchRequest(); 
     	SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder(); 
     	searchSourceBuilder.query(QueryBuilders.matchAllQuery()); 
+    	searchRequest.source(searchSourceBuilder);
+    	
+    	SearchResponse searchResponse = null;
+    	try {
+			searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+			
+			System.out.println("Hits >>> "+searchResponse.getHits());
+			System.out.println("searchResponse >>> "+searchResponse.toString());
+//			System.out.println(searchResponse.);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+    	return searchResponse.toString();
+    }
+
+    @GetMapping("/search-with-term")
+    public String searchWithTerm() {
+    	SearchRequest searchRequest = new SearchRequest("logdataindex"); 
+    	SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder(); 
+    	
+//    	searchSourceBuilder.query(QueryBuilders.fuzzyQuery("message", "rocks"));
+//    	searchSourceBuilder.query(QueryBuilders.commonTermsQuery("host", "neosoft"));
+    	searchSourceBuilder.query(QueryBuilders.matchBoolPrefixQuery(MESSAGE_FIELD, "neo"));
+    	
     	searchRequest.source(searchSourceBuilder);
     	
     	SearchResponse searchResponse = null;
@@ -121,6 +151,9 @@ public class LogDataController
     	
     	return searchResponse.toString();
     }
+
+    
+    
     
     @GetMapping("/host")
     public List<LogData> searchLogDataByHost(@RequestParam("host") String host)

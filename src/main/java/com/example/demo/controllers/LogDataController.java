@@ -1,4 +1,5 @@
 package com.example.demo.controllers;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -39,34 +40,33 @@ import co.elastic.clients.elasticsearch.core.IndexResponse;
 
 @RestController
 @RequestMapping("/logdata")
-public class LogDataController
-{
-    private static final String MESSAGE_FIELD = "message";
+public class LogDataController {
+	private static final String MESSAGE_FIELD = "message";
 
 	private static final String ROCKS = "rocks";
 
-	private static final String TWITTER = "twitter5";
+	private static final String TWITTER = "twitter302";
 
 	@Autowired
-    private LogDataService logDataService;
-    
-    @Autowired
-    private RestHighLevelClient elasticSearchClient;
-	
+	private LogDataService logDataService;
+
+	@Autowired
+	private RestHighLevelClient elasticSearchClient;
+
 	RestHighLevelClient client = new RestHighLevelClient(
 			RestClient.builder(new HttpHost("localhost", 9200, "http"), new HttpHost("localhost", 9201, "http")));
 
+	// tetsing -----------------------------------------------------
 
-    // tetsing -----------------------------------------------------
-    
-    @GetMapping("/finals")
+	@GetMapping("/finals")
 	public String trail1() throws IOException
 
 	{
 
-		//String filePath = "C:\\Users\\Hp\\Desktop\\phonenumber.txt";
+		// String filePath = "C:\\Users\\Hp\\Desktop\\phonenumber.txt";
 		String filePath = "D:\\WORK\\NEOSOFT\\Java-Team\\Projects\\elastic-search\\store\\demodata.txt";
-		
+
+		StringBuilder content = new StringBuilder();
 		String encodedfile = null;
 
 		File file = new File(filePath);
@@ -74,120 +74,121 @@ public class LogDataController
 			FileInputStream fileInputStreamReader = new FileInputStream(file);
 			byte[] bytes = new byte[(int) file.length()];
 			fileInputStreamReader.read(bytes);
-			encodedfile = new String(Base64.getEncoder().encodeToString(bytes));
+			// encodedfile = new String(Base64.getEncoder().encodeToString(bytes));
+
+			System.out.println("new String(Base64.getEncoder().encodeToString(bytes)) >>> "
+					+ new String(Base64.getEncoder().encodeToString(bytes)));
+			System.out.println("new String(bytes) >>> " + new String(bytes));
+
+			encodedfile = new String(bytes);
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
-		System.out.println(encodedfile);
+		System.out.println("encodedfile : " + encodedfile);
 		// creating index
 		CreateIndexRequest request = new CreateIndexRequest(TWITTER);
 		CreateIndexResponse createIndexResponse = client.indices().create(request, RequestOptions.DEFAULT);
-		System.out.print(createIndexResponse);
+		System.out.print("createIndexResponse : " + createIndexResponse);
 
 		// mapping properties
 		PutMappingRequest request2 = new PutMappingRequest(TWITTER);
 
 		request2.source("{\n" + "  \"properties\": {\n" + "    \"message\": {\n" + "      \"type\": \"binary\"\n"
 				+ "    }\n" + "  }\n" + "}", XContentType.JSON);
-		org.elasticsearch.action.support.master.AcknowledgedResponse putMappingResponse = client.indices().putMapping(request2, RequestOptions.DEFAULT);
 
-		//IndexRequest request3 = new IndexRequest("twitter", "_doc", "56");
-		org.elasticsearch.action.index.IndexRequest request3 = new org.elasticsearch.action.index.IndexRequest(TWITTER, "_doc", "56");
-		
-		request3.source("{\n" + "  \"message\": " + "\"" + encodedfile + "\"" + "}", XContentType.JSON);
+		System.out.println("initiating PutMapping repsonse...!");
 
-		org.elasticsearch.action.index.IndexResponse createIndexResponse1 = client.index(request3, RequestOptions.DEFAULT);
-		
-		System.out.println("Ingestion result >>> "+createIndexResponse1.toString());
-		
+		org.elasticsearch.action.support.master.AcknowledgedResponse putMappingResponse = client.indices()
+				.putMapping(request2, RequestOptions.DEFAULT);
+
+		System.out.println("request2 done...!!");
+
+		// IndexRequest request3 = new IndexRequest("twitter", "_doc", "56");
+		org.elasticsearch.action.index.IndexRequest request3 = new org.elasticsearch.action.index.IndexRequest(TWITTER,
+				"_doc", "301");
+
+		content.append(encodedfile);
+		request3.source("{\n" + "  \"message\": " + "\"" + content + "\"" + "}", XContentType.JSON);
+
+		org.elasticsearch.action.index.IndexResponse createIndexResponse1 = client.index(request3,
+				RequestOptions.DEFAULT);
+
+		System.out.println("Ingestion result >>> " + createIndexResponse1.toString());
+
 		return createIndexResponse1.toString();
 
 	}
-    
-    @GetMapping("/test-doc-ingestion")
-    public String testDocIngestion() {
-    	SearchRequest searchRequest = new SearchRequest(); 
-    	SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder(); 
-    	searchSourceBuilder.query(QueryBuilders.matchAllQuery()); 
-    	searchRequest.source(searchSourceBuilder);
-    	
-    	SearchResponse searchResponse = null;
-    	try {
+
+	@GetMapping("/test-doc-ingestion")
+	public String testDocIngestion() {
+		SearchRequest searchRequest = new SearchRequest();
+		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+		searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+		searchRequest.source(searchSourceBuilder);
+
+		SearchResponse searchResponse = null;
+		try {
 			searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-			
-			System.out.println("Hits >>> "+searchResponse.getHits());
-			System.out.println("searchResponse >>> "+searchResponse.toString());
+
+			System.out.println("Hits >>> " + searchResponse.getHits());
+			System.out.println("searchResponse >>> " + searchResponse.toString());
 //			System.out.println(searchResponse.);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    	
-    	return searchResponse.toString();
-    }
 
-    @GetMapping("/search-with-term")
-    public String searchWithTerm(@RequestParam String term) {
-    	SearchRequest searchRequest = new SearchRequest("logdataindex"); 
-    	SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder(); 
-    	
+		return searchResponse.toString();
+	}
+
+	@GetMapping("/search-with-term")
+	public String searchWithTerm(@RequestParam String term) {
+		SearchRequest searchRequest = new SearchRequest("twitter302");
+		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+
 //    	searchSourceBuilder.query(QueryBuilders.fuzzyQuery("message", "rocks"));
 //    	searchSourceBuilder.query(QueryBuilders.commonTermsQuery("host", "neosoft"));
-    	searchSourceBuilder.query(QueryBuilders.matchBoolPrefixQuery(MESSAGE_FIELD, term));
-    	
-    	searchRequest.source(searchSourceBuilder);
-    	
-    	SearchResponse searchResponse = null;
-    	try {
+		searchSourceBuilder.query(QueryBuilders.matchBoolPrefixQuery(MESSAGE_FIELD, term));
+
+		searchRequest.source(searchSourceBuilder);
+
+		SearchResponse searchResponse = null;
+		try {
 			searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-			
-			System.out.println("Hits >>> "+searchResponse.getHits());
-			System.out.println("searchResponse >>> "+searchResponse.toString());
+
+			System.out.println("Hits >>> " + searchResponse.getHits());
+			System.out.println("searchResponse >>> " + searchResponse.toString());
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    	
-    	return searchResponse.toString();
-    }
 
-    
-    
-    
-    @GetMapping("/host")
-    public List<LogData> searchLogDataByHost(@RequestParam("host") String host)
-    {
-        List<LogData> logDataList = logDataService.getAllLogDataForHost(host);
+		return searchResponse.toString();
+	}
 
-        return logDataList;
-    }
+	@GetMapping("/host")
+	public List<LogData> searchLogDataByHost(@RequestParam("host") String host) {
+		List<LogData> logDataList = logDataService.getAllLogDataForHost(host);
 
-    @GetMapping("/search")
-    public List<LogData> searchLogDataByTerm(@RequestParam("term") String term)
-    {
-        return logDataService.findBySearchTerm(term);
-    }
+		return logDataList;
+	}
 
-    @PostMapping("/addData")
-    public LogData addLogData(@RequestBody LogData logData)
-    {
+	@GetMapping("/search")
+	public List<LogData> searchLogDataByTerm(@RequestParam("term") String term) {
+		return logDataService.findBySearchTerm(term);
+	}
 
-        return logDataService.createLogDataIndex(logData);
-    }
+	@PostMapping("/addData")
+	public LogData addLogData(@RequestBody LogData logData) {
 
-    @PostMapping("/createInBulk")
-    public  List<LogData> addLogDataInBulk(@RequestBody List<LogData> logDataList)
-    {
-        return (List<LogData>) logDataService.createLogDataIndices(logDataList);
-    }
-   
- 
-    
-    	
-    
+		return logDataService.createLogDataIndex(logData);
+	}
+
+	@PostMapping("/createInBulk")
+	public List<LogData> addLogDataInBulk(@RequestBody List<LogData> logDataList) {
+		return (List<LogData>) logDataService.createLogDataIndices(logDataList);
+	}
+
 }
-    
-  
-
-

@@ -37,15 +37,19 @@ import com.example.demo.services.LogDataService;
 
 import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/logdata")
 public class LogDataController {
+	
 	private static final String MESSAGE_FIELD = "message";
 
 	private static final String ROCKS = "rocks";
 
-	private static final String TWITTER = "twitter302";
+	private static final String TWITTER = "twitter303";
+	private static final String DOC_ID = "303";
 
 	@Autowired
 	private LogDataService logDataService;
@@ -107,7 +111,7 @@ public class LogDataController {
 
 		// IndexRequest request3 = new IndexRequest("twitter", "_doc", "56");
 		org.elasticsearch.action.index.IndexRequest request3 = new org.elasticsearch.action.index.IndexRequest(TWITTER,
-				"_doc", "301");
+				"_doc", DOC_ID);
 
 		content.append(encodedfile);
 		request3.source("{\n" + "  \"message\": " + "\"" + content + "\"" + "}", XContentType.JSON);
@@ -145,7 +149,7 @@ public class LogDataController {
 
 	@GetMapping("/search-with-term")
 	public String searchWithTerm(@RequestParam String term) {
-		SearchRequest searchRequest = new SearchRequest("twitter302");
+		SearchRequest searchRequest = new SearchRequest(TWITTER);
 		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
 //    	searchSourceBuilder.query(QueryBuilders.fuzzyQuery("message", "rocks"));
@@ -160,11 +164,13 @@ public class LogDataController {
 
 			System.out.println("Hits >>> " + searchResponse.getHits());
 			System.out.println("searchResponse >>> " + searchResponse.toString());
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
+		} catch (Exception e) {
+			log.info("Error :--- {}", e.getMessage());
 			e.printStackTrace();
 		}
 
+		System.out.println("searchResponse :>>> "+searchResponse);
+		
 		return searchResponse.toString();
 	}
 
